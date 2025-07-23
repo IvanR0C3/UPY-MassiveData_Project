@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  airflow-postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres-db-volume:/var/lib/postgresql/data
+    restart: always
+
+  airflow-webserver:
+    image: apache/airflow:2.7.0
+    depends_on:
+      - airflow-postgres
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres/airflow
+      AIRFLOW__CORE__FERNET_KEY: ''
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'False'
+    volumes:
+      - ./dags:/opt/airflow/dags
+    ports:
+      - "8080:8080"
+    command: webserver
+    restart: always
+
+  airflow-scheduler:
+    image: apache/airflow:2.7.0
+    depends_on:
+      - airflow-webserver
+    environment:
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres/airflow
+    volumes:
+      - ./dags:/opt/airflow/dags
+    command: scheduler
+    restart: always
+
+  mongo:
+    image: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    restart: always
+
+  streamlit:
+    build:
+      context: ./streamlit_app
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./streamlit_app:/app
+    depends_on:
+      - mongo
+    restart: always
+
+volumes:
+  postgres-db-volume:
+  mongo-data:
