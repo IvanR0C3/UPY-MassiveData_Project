@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY . /app
 
-RUN pip install --no-cache-dir streamlit pymongo pandas matplotlib
+RUN pip install --no-cache-dir streamlit pandas pymongo plotly
 
 EXPOSE 8501
 

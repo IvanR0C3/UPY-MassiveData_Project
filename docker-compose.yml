@@ -20,12 +20,18 @@ services:
       AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres/airflow
       AIRFLOW__CORE__FERNET_KEY: ''
       AIRFLOW__CORE__LOAD_EXAMPLES: 'False'
+      AIRFLOW__WEBSERVER__SECRET_KEY: mySuperSecretKey123!
+    env_file:
+      - .env
     volumes:
       - ./dags:/opt/airflow/dags
+      - ./requirements.txt:/requirements.txt
     ports:
       - "8080:8080"
-    command: webserver
+    command: >
+      bash -c "pip install -r /requirements.txt && airflow webserver"
     restart: always
+
 
   airflow-scheduler:
     image: apache/airflow:2.7.0
@@ -33,15 +39,20 @@ services:
       - airflow-webserver
     environment:
       AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres/airflow
+      AIRFLOW__WEBSERVER__SECRET_KEY: mySuperSecretKey123!
+    env_file:
+      - .env
     volumes:
       - ./dags:/opt/airflow/dags
-    command: scheduler
+      - ./requirements.txt:/requirements.txt
+    command: >
+      bash -c "pip install -r /requirements.txt && airflow scheduler"
     restart: always
 
   mongo:
     image: mongo
     ports:
-      - "27017:27017"
+      - "27018:27017"
     volumes:
       - mongo-data:/data/db
     restart: always
