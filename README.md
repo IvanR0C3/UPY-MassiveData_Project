@@ -194,43 +194,44 @@ This helps maintain a clean separation between tasks and ensures a modular and t
 
 ---
 
-### 🔄 Flow of XCom Data
-
-Each `ingest_*_data` function uses the following command to push API data:
+🔄 Flow of XCom Data
+Each ingest_*_data function uses the following command to push API data:
 
 ```python
 context['ti'].xcom_push(key='weather_data', value=json_data)
+```
 
 Then, in the corresponding transform task, the data is retrieved with:
 
+```python
 weather_data = context['ti'].xcom_pull(key='weather_data', task_ids='ingest_weather_data')
+```
 
-This pattern is used for:
+This pattern is used for the following pipelines:
 
-stock_data (from ingest_stock_data → transform_stock_data)
+stock_data → pushed by ingest_stock_data, pulled by transform_stock_data
 
-weather_data (from ingest_weather_data → transform_weather_data)
+weather_data → pushed by ingest_weather_data, pulled by transform_weather_data
 
-mobility_data (from ingest_mobility_data → transform_mobility_data)
+mobility_data → pushed by ingest_mobility_data, pulled by transform_mobility_data
 
-Why Use XCom Here?
-It avoids the need to re-query APIs in the transform stage.
+❓ Why Use XCom Here?
+Avoids re-querying APIs in the transform stage.
 
-It reduces I/O overhead.
+Reduces I/O overhead and improves pipeline speed.
 
-It enhances data lineage and debuggability, allowing you to inspect what each task passed to the next.
+Enhances data lineage and debuggability — you can inspect what each task passed to the next.
 
-It allows the load task to pull data from all transform stages cleanly.
+Enables clean data handoff to the final load_processed_data task.
 
-How to Inspect XCom in the Airflow UI
-You can inspect the stored XCom values in the Airflow Web UI:
-
-Go to the DAG graph view.
+🧪 How to Inspect XCom in the Airflow UI
+Open the DAGs view in the Airflow Web UI.
 
 Click on a task (e.g., ingest_weather_data).
 
-Select the "XCom" tab.
+Navigate to the "XCom" tab.
 
-View the pushed data (if serializable).
+You will see the pushed values (if serializable).
 
-Note: Complex objects like MongoDB _id fields (ObjectId) must be excluded or converted to avoid serialization errors.
+Note: Complex objects like MongoDB’s _id (ObjectId) must be excluded or converted to avoid serialization errors in XCom.
+
